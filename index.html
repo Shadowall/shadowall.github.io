@@ -1,1 +1,348 @@
-hello world
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UptimeRobot Dashboard</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #0078d4;
+        }
+        .status-summary {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        .status-card {
+            flex: 1;
+            margin: 0 10px;
+            padding: 15px;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background-color: white;
+            text-align: center;
+        }
+        .status-card.up {
+            border-left: 5px solid #4caf50;
+        }
+        .status-card.down {
+            border-left: 5px solid #f44336;
+        }
+        .status-card.paused {
+            border-left: 5px solid #ff9800;
+        }
+        .status-card h3 {
+            margin-top: 0;
+            font-size: 16px;
+            color: #555;
+        }
+        .status-card .count {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .monitors-list {
+            background-color: white;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .monitors-list table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .monitors-list th {
+            text-align: left;
+            padding: 12px 15px;
+            background-color: #f1f1f1;
+            font-weight: 600;
+        }
+        .monitors-list td {
+            padding: 12px 15px;
+            border-top: 1px solid #eee;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-up { background-color: #4caf50; }
+        .status-down { background-color: #f44336; }
+        .status-paused { background-color: #ff9800; }
+        .refresh-btn {
+            background-color: #0078d4;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .refresh-btn:hover {
+            background-color: #005a9e;
+        }
+        .error-message {
+            background-color: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .loading {
+            text-align: center;
+            padding: 30px;
+            font-size: 18px;
+            color: #666;
+        }
+        .uptime-bar {
+            height: 8px;
+            background-color: #eee;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        .uptime-value {
+            height: 100%;
+            background-color: #4caf50;
+        }
+        .last-check {
+            font-size: 12px;
+            color: #777;
+            margin-top: 5px;
+        }
+        .last-updated {
+            text-align: right;
+            font-size: 12px;
+            color: #777;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">UptimeRobot Integration</div>
+            <button id="refreshBtn" class="refresh-btn">Refresh Data</button>
+        </div>
+
+        <div id="errorMessage" class="error-message"></div>
+
+        <div id="dashboard">
+            <div class="status-summary" id="statusSummary">
+                <div class="status-card up">
+                    <h3>Up</h3>
+                    <div class="count" id="upCount">0</div>
+                </div>
+                <div class="status-card down">
+                    <h3>Down</h3>
+                    <div class="count" id="downCount">0</div>
+                </div>
+                <div class="status-card paused">
+                    <h3>Paused</h3>
+                    <div class="count" id="pausedCount">0</div>
+                </div>
+                <div class="status-card">
+                    <h3>Total Monitors</h3>
+                    <div class="count" id="totalCount">0</div>
+                </div>
+            </div>
+
+            <div class="monitors-list" id="monitorsList">
+                <div id="loading" class="loading">Loading monitors data...</div>
+                <table id="monitorsTable" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th>Monitor Name</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Uptime (30 days)</th>
+                            <th>Last Check</th>
+                        </tr>
+                    </thead>
+                    <tbody id="monitorsTableBody">
+                    </tbody>
+                </table>
+                <div class="last-updated" id="lastUpdated"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Constants
+        const API_URL = 'https://api.uptimerobot.com/v2/getMonitors';
+        const API_KEY = 'u2875017-74bd850a1a481f6310b42a68'; // Pre-integrated API key
+        
+        const STATUS_MAP = {
+            0: { text: 'Paused', class: 'status-paused' },
+            1: { text: 'Not checked yet', class: 'status-paused' },
+            2: { text: 'Up', class: 'status-up' },
+            8: { text: 'Seems Down', class: 'status-down' },
+            9: { text: 'Down', class: 'status-down' }
+        };
+        const TYPE_MAP = {
+            1: 'HTTP(S)',
+            2: 'Keyword',
+            3: 'Ping',
+            4: 'Port',
+            5: 'Heartbeat'
+        };
+
+        // DOM Elements
+        const dashboard = document.getElementById('dashboard');
+        const errorMessage = document.getElementById('errorMessage');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const loading = document.getElementById('loading');
+        const monitorsTable = document.getElementById('monitorsTable');
+        const monitorsTableBody = document.getElementById('monitorsTableBody');
+        const upCount = document.getElementById('upCount');
+        const downCount = document.getElementById('downCount');
+        const pausedCount = document.getElementById('pausedCount');
+        const totalCount = document.getElementById('totalCount');
+        const lastUpdated = document.getElementById('lastUpdated');
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchMonitors();
+        });
+
+        // Event Listeners
+        refreshBtn.addEventListener('click', function() {
+            fetchMonitors();
+        });
+
+        // Functions
+        function fetchMonitors() {
+            // Reset UI
+            errorMessage.style.display = 'none';
+            loading.style.display = 'block';
+            monitorsTable.style.display = 'none';
+            
+            // Prepare request data
+            const data = new FormData();
+            data.append('api_key', API_KEY);
+            data.append('format', 'json');
+            data.append('all_time_uptime_ratio', '1');
+            data.append('response_times', '1');
+            data.append('logs', '1');
+            
+            // Make API request
+            fetch(API_URL, {
+                method: 'POST',
+                body: data
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.stat === 'ok') {
+                    renderMonitors(data.monitors);
+                    updateLastUpdated();
+                } else {
+                    showError('API Error: ' + (data.error?.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                showError('Network Error: ' + error.message);
+            })
+            .finally(() => {
+                loading.style.display = 'none';
+            });
+        }
+
+        function renderMonitors(monitors) {
+            // Clear table
+            monitorsTableBody.innerHTML = '';
+            
+            // Count different statuses
+            let upCounter = 0;
+            let downCounter = 0;
+            let pausedCounter = 0;
+            
+            // Process and display each monitor
+            monitors.forEach(monitor => {
+                // Update counters
+                if (monitor.status === 2) upCounter++;
+                else if (monitor.status === 8 || monitor.status === 9) downCounter++;
+                else pausedCounter++;
+                
+                // Create table row
+                const row = document.createElement('tr');
+                
+                // Format last check time
+                const lastCheck = new Date(monitor.last_check * 1000);
+                const lastCheckFormatted = lastCheck.toLocaleString();
+                
+                // Calculate uptime percentage
+                const uptimePercent = parseFloat(monitor.all_time_uptime_ratio) || 0;
+                
+                // Build row content
+                row.innerHTML = `
+                    <td>${monitor.friendly_name}</td>
+                    <td>${TYPE_MAP[monitor.type] || 'Unknown'}</td>
+                    <td>
+                        <span class="status-indicator ${STATUS_MAP[monitor.status].class}"></span>
+                        ${STATUS_MAP[monitor.status].text}
+                    </td>
+                    <td>
+                        <div>${uptimePercent.toFixed(2)}%</div>
+                        <div class="uptime-bar">
+                            <div class="uptime-value" style="width: ${uptimePercent}%"></div>
+                        </div>
+                    </td>
+                    <td>
+                        <div>${lastCheckFormatted}</div>
+                        <div class="last-check">Response: ${monitor.average_response || 'N/A'} ms</div>
+                    </td>
+                `;
+                
+                monitorsTableBody.appendChild(row);
+            });
+            
+            // Update summary counters
+            upCount.textContent = upCounter;
+            downCount.textContent = downCounter;
+            pausedCount.textContent = pausedCounter;
+            totalCount.textContent = monitors.length;
+            
+            // Show table
+            monitorsTable.style.display = 'table';
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+
+        function updateLastUpdated() {
+            const now = new Date();
+            lastUpdated.textContent = `Last updated: ${now.toLocaleString()}`;
+        }
+
+        // Auto-refresh data every 5 minutes
+        setInterval(fetchMonitors, 300000);
+    </script>
+</body>
+</html>
