@@ -153,6 +153,26 @@
             overflow-y: auto;
             display: none;
         }
+        .down-monitors {
+            margin-top: 20px;
+            background-color: #442222;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .down-monitors h3 {
+            color: #f44336;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+        .down-monitors ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .down-monitors li {
+            margin-bottom: 5px;
+        }
     </style>
 </head>
 <body>
@@ -163,6 +183,11 @@
         </div>
 
         <div id="errorMessage" class="error-message"></div>
+        
+        <div id="downMonitors" class="down-monitors">
+            <h3>⚠️ Down Monitors</h3>
+            <ul id="downMonitorsList"></ul>
+        </div>
 
         <div id="dashboard">
             <div class="status-summary" id="statusSummary">
@@ -207,51 +232,9 @@
     </div>
 
     <script>
-        // Use sample data for demonstration if we can't connect to the API
-        const SAMPLE_DATA = {
-            "stat": "ok",
-            "pagination": {
-                "offset": 0,
-                "limit": 50,
-                "total": 2
-            },
-            "monitors": [
-                {
-                    "id": 777749809,
-                    "friendly_name": "Demo Website",
-                    "url": "http://www.example.com",
-                    "type": 1,
-                    "sub_type": "",
-                    "keyword_type": "",
-                    "keyword_value": "",
-                    "http_username": "",
-                    "http_password": "",
-                    "port": "",
-                    "interval": 300,
-                    "status": 2,
-                    "all_time_uptime_ratio": 99.98,
-                    "average_response": 187,
-                    "last_check": Math.floor(Date.now() / 1000) - 180
-                },
-                {
-                    "id": 777712827,
-                    "friendly_name": "Demo API",
-                    "url": "http://api.example.com",
-                    "type": 1,
-                    "sub_type": "",
-                    "keyword_type": "",
-                    "keyword_value": "",
-                    "http_username": "",
-                    "http_password": "",
-                    "port": "",
-                    "interval": 60,
-                    "status": 2,
-                    "all_time_uptime_ratio": 99.95,
-                    "average_response": 142,
-                    "last_check": Math.floor(Date.now() / 1000) - 60
-                }
-            ]
-        };
+        // URL of your Cloudflare Worker
+        // IMPORTANT: Replace with your deployed Cloudflare Worker URL
+        const PROXY_URL = 'https://red-brook-ecca.aharte.workers.dev';
         
         // Status and Type Mappings
         const STATUS_MAP = {
@@ -282,6 +265,8 @@
         const totalCount = document.getElementById('totalCount');
         const lastUpdated = document.getElementById('lastUpdated');
         const debugInfo = document.getElementById('debugInfo');
+        const downMonitorsDiv = document.getElementById('downMonitors');
+        const downMonitorsList = document.getElementById('downMonitorsList');
 
         // Initialize when page loads
         document.addEventListener('DOMContentLoaded', fetchMonitors);
@@ -289,71 +274,43 @@
         // Event Listeners
         refreshBtn.addEventListener('click', fetchMonitors);
 
-        // Function to fetch monitors data
-        function fetchMonitors() {
+        // Function to fetch monitors data from Cloudflare Worker proxy
+        async function fetchMonitors() {
             // Reset UI
             errorMessage.style.display = 'none';
             loading.style.display = 'block';
             monitorsTable.style.display = 'none';
+            downMonitorsDiv.style.display = 'none';
             
             // For debug purposes
             debugInfo.style.display = 'none';
             debugInfo.textContent = 'Debug Information:\n';
             
-            // Get current timestamp for debugging
-            debugInfo.textContent += `Time: ${new Date().toISOString()}\n`;
-            
-            // Use Sample Data (remove this in production)
-            renderSampleData();
-            
-            // The following code can be uncommented if you want to attempt a real connection
-            // to the UptimeRobot API, but it likely won't work due to CORS restrictions
-            
-            /*
-            // API Key - Read Only
-            const API_KEY = 'ur2875017-118b6389ec2262a9135b7929';
-            
             try {
-                // Attempt to fetch using a CORS proxy
-                fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent('https://api.uptimerobot.com/v2/getMonitors?api_key=' + API_KEY + '&format=json&all_time_uptime_ratio=1')}`)
-                    .then(response => {
-                        debugInfo.textContent += `Response status: ${response.status}\n`;
-                        return response.text();
-                    })
-                    .then(text => {
-                        debugInfo.textContent += `Response text: ${text.substring(0, 100)}...\n`;
-                        try {
-                            const data = JSON.parse(text);
-                            if (data && data.stat === 'ok') {
-                                renderMonitors(data.monitors);
-                                updateLastUpdated();
-                            } else {
-                                debugInfo.textContent += `API Error: ${JSON.stringify(data)}\n`;
-                                throw new Error('API returned error status');
-                            }
-                        } catch (e) {
-                            debugInfo.textContent += `Parse error: ${e.message}\n`;
-                            throw e;
-                        }
-                    })
-                    .catch(error => {
-                        debugInfo.textContent += `Fetch error: ${error.message}\n`;
-                        // Fall back to sample data
-                        renderSampleData();
-                    });
-            } catch (e) {
-                debugInfo.textContent += `Exception: ${e.message}\n`;
-                // Fall back to sample data
-                renderSampleData();
+                // Fetch data from the Cloudflare Worker proxy
+                const response = await fetch(PROXY_URL);
+                
+                // Check if the response is ok
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                
+                // Parse the JSON response
+                const data = await response.json();
+                
+                // Check if the response has the expected format
+                if (data && data.stat === 'ok') {
+                    renderMonitors(data.monitors);
+                    updateLastUpdated();
+                } else {
+                    throw new Error('Invalid response format from API');
+                }
+            } catch (error) {
+                showError(`Failed to fetch monitor data: ${error.message}`);
+                debugInfo.style.display = 'block';
+            } finally {
+                loading.style.display = 'none';
             }
-            */
-        }
-        
-        // Function to render sample data
-        function renderSampleData() {
-            showInfo('Using sample data for demonstration');
-            renderMonitors(SAMPLE_DATA.monitors);
-            updateLastUpdated();
         }
 
         // Function to render monitors data
@@ -363,19 +320,29 @@
                 return;
             }
             
-            // Clear table
+            // Clear tables and lists
             monitorsTableBody.innerHTML = '';
+            downMonitorsList.innerHTML = '';
             
             // Count different statuses
             let upCounter = 0;
             let downCounter = 0;
             let pausedCounter = 0;
+            let hasDownMonitors = false;
             
             // Process and display each monitor
             monitors.forEach(monitor => {
                 // Update counters
                 if (monitor.status === 2) upCounter++;
-                else if (monitor.status === 8 || monitor.status === 9) downCounter++;
+                else if (monitor.status === 8 || monitor.status === 9) {
+                    downCounter++;
+                    hasDownMonitors = true;
+                    
+                    // Add to down monitors list
+                    const li = document.createElement('li');
+                    li.textContent = `${monitor.friendly_name} (${monitor.url})`;
+                    downMonitorsList.appendChild(li);
+                }
                 else pausedCounter++;
                 
                 // Create table row
@@ -411,6 +378,11 @@
                     </td>
                 `;
                 
+                // Highlight down rows
+                if (monitor.status === 8 || monitor.status === 9) {
+                    row.style.backgroundColor = '#3a2222';
+                }
+                
                 monitorsTableBody.appendChild(row);
             });
             
@@ -420,21 +392,22 @@
             pausedCount.textContent = pausedCounter;
             totalCount.textContent = monitors.length;
             
+            // Show down monitors section if there are any
+            if (hasDownMonitors) {
+                downMonitorsDiv.style.display = 'block';
+            }
+            
             // Show table
             monitorsTable.style.display = 'table';
-            loading.style.display = 'none';
         }
 
         // Function to display errors
         function showError(message) {
             errorMessage.textContent = message;
             errorMessage.style.display = 'block';
-            debugInfo.style.display = 'block';
-        }
-        
-        // Function to display info message
-        function showInfo(message) {
-            debugInfo.textContent += message + '\n';
+            
+            // Add to debug log
+            debugInfo.textContent += `ERROR: ${message}\n`;
         }
 
         // Function to update last updated timestamp
