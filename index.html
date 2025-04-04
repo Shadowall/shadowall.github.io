@@ -765,9 +765,9 @@
 
     // Add filter and search functionality
     function initFilterAndSearch() {
-    const searchInput = document.getElementById('searchMonitors');
-    const statusFilter = document.getElementById('statusFilter');
-    const typeFilter = document.getElementById('typeFilter');
+        const searchInput = document.getElementById('searchMonitors');
+        const statusFilter = document.getElementById('statusFilter');
+        const typeFilter = document.getElementById('typeFilter');
 
     function applyFilters() {
         const searchTerm = searchInput.value.toLowerCase();
@@ -813,22 +813,9 @@
     statusFilter.addEventListener('change', applyFilters);
     typeFilter.addEventListener('change', applyFilters);
 }
-    // Add event listeners
-    searchInput.addEventListener('input', applyFilters);
-    statusFilter.addEventListener('change', applyFilters);
-    typeFilter.addEventListener('change', applyFilters);
-}
 
-// Call initialization functions when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    fetchMonitors();
-    fetchIncidentHistory();
-    initNotifications();
-    initFilterAndSearch();
 
-    // Auto-refresh data every 1 minute
-    setInterval(fetchMonitors, 60000);
-});
+
 </script>
 </body>
 </html>
