@@ -364,6 +364,8 @@
             formData.append('all_time_uptime_ratio', '1');
             formData.append('response_times', '1');
             formData.append('logs', '1');
+            formData.append('response_times_limit', '1'); 
+            formData.append('alert_contacts', '1');
 
             // Make the API request directly
             const response = await fetch('https://api.uptimerobot.com/v2/getMonitors', {
