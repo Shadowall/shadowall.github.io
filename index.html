@@ -364,7 +364,7 @@
             formData.append('all_time_uptime_ratio', '1');
             formData.append('response_times', '1');
             formData.append('logs', '1');
-            formData.append('response_times_limit', '1'); 
+            formData.append('response_times_limit', '1');
             formData.append('alert_contacts', '1');
 
             // Make the API request directly
@@ -656,60 +656,133 @@
     }
 
     // Function to fetch and display incident history
-    function fetchIncidentHistory() {
+    async function fetchIncidentHistory() {
         document.getElementById('incidentHistoryLoading').style.display = 'block';
         document.getElementById('incidentList').innerHTML = '';
 
-        // Here you would make an API call to get incident logs
-        // For demo purposes, we'll create mock data
-        setTimeout(() => {
+        try {
+            // Create API request data for logs
+            const formData = new FormData();
+            formData.append('api_key', API_KEY);
+            formData.append('format', 'json');
+            formData.append('logs', '1');
+            formData.append('types', '1-2'); // 1 for down, 2 for up events
+            formData.append('limit', '20'); // Get last 20 incidents
+
+            // Make the API request
+            const response = await fetch('https://api.uptimerobot.com/v2/getMonitors', {
+                method: 'POST',
+                body: formData
+            });
+
+            // Parse response
+            const data = await response.json();
+            console.log('Incident History API Response:', data);
+
+            // Check if the response is valid
+            if (data && data.stat === 'ok' && data.monitors) {
+                // Process the real incidents from all monitors
+                let allIncidents = [];
+
+                // Extract logs from all monitors
+                data.monitors.forEach(monitor => {
+                    if (monitor.logs && Array.isArray(monitor.logs)) {
+                        monitor.logs.forEach(log => {
+                            // Add monitor name to the log
+                            log.monitor_name = monitor.friendly_name;
+                            allIncidents.push(log);
+                        });
+                    }
+                });
+
+                // Sort incidents by timestamp (newest first)
+                allIncidents.sort((a, b) => b.datetime - a.datetime);
+
+                // Limit to the most recent incidents
+                allIncidents = allIncidents.slice(0, 20);
+
+                // Display the incidents
+                renderIncidentList(allIncidents);
+            } else {
+                throw new Error('Invalid response from UptimeRobot API for incident history');
+            }
+        } catch (error) {
+            console.error('Failed to fetch incident history:', error);
+            document.getElementById('incidentList').innerHTML = `<p>Error loading incident history: ${error.message}</p>`;
+        } finally {
             document.getElementById('incidentHistoryLoading').style.display = 'none';
+        }
+    }
 
-            const incidents = [
-                { monitor: 'Main Website', time: '2023-04-03 14:23', duration: '5m 12s', reason: 'Connection timeout' },
-                { monitor: 'API Server', time: '2023-04-02 08:45', duration: '12m 30s', reason: 'HTTP 500 error' },
-                { monitor: 'Database Server', time: '2023-04-01 22:10', duration: '3m 45s', reason: 'Connection refused' }
-            ];
+    // Function to render the incident list
+    function renderIncidentList(incidents) {
+        const incidentList = document.getElementById('incidentList');
 
-            const incidentList = document.getElementById('incidentList');
+        if (incidents.length === 0) {
+            incidentList.innerHTML = '<p>No incidents in the last 7 days.</p>';
+            return;
+        }
 
-            if (incidents.length === 0) {
-                incidentList.innerHTML = '<p>No incidents in the last 7 days.</p>';
-                return;
+        const table = document.createElement('table');
+        table.style.width = '100%';
+        table.style.borderCollapse = 'collapse';
+
+        // Create header
+        const thead = document.createElement('thead');
+        thead.innerHTML = `
+            <tr>
+                <th style="text-align: left; padding: 10px; border-bottom: 1px solid #444;">Monitor</th>
+                <th style="text-align: left; padding: 10px; border-bottom: 1px solid #444;">Time</th>
+                <th style="text-align: left; padding: 10px; border-bottom: 1px solid #444;">Type</th>
+                <th style="text-align: left; padding: 10px; border-bottom: 1px solid #444;">Reason</th>
+            </tr>
+        `;
+        table.appendChild(thead);
+
+        // Create body
+        const tbody = document.createElement('tbody');
+        incidents.forEach(incident => {
+            // Convert timestamp to readable date
+            const incidentDate = new Date(incident.datetime * 1000);
+            const formattedDate = incidentDate.toLocaleString();
+
+            // Determine event type and reason
+            let eventType = '';
+            let rowColor = '';
+
+            if (incident.type === 1) {
+                eventType = 'Down';
+                rowColor = '#3a2222';
+            } else if (incident.type === 2) {
+                eventType = 'Up';
+                rowColor = '#223a22';
+            } else if (incident.type === 98) {
+                eventType = 'Started';
+                rowColor = '';
+            } else if (incident.type === 99) {
+                eventType = 'Paused';
+                rowColor = '#2a2a3a';
+            } else {
+                eventType = 'Unknown';
+                rowColor = '';
             }
 
-            const table = document.createElement('table');
-            table.style.width = '100%';
-            table.style.borderCollapse = 'collapse';
+            const row = document.createElement('tr');
+            if (rowColor) {
+                row.style.backgroundColor = rowColor;
+            }
 
-            // Create header
-            const thead = document.createElement('thead');
-            thead.innerHTML = `
-                <tr>
-                    <th style="text-align: left; padding: 10px; border-bottom: 1px solid #444;">Monitor</th>
-                    <th style="text-align: left; padding: 10px; border-bottom: 1px solid #444;">Time</th>
-                    <th style="text-align: left; padding: 10px; border-bottom: 1px solid #444;">Duration</th>
-                    <th style="text-align: left; padding: 10px; border-bottom: 1px solid #444;">Reason</th>
-                </tr>
+            row.innerHTML = `
+                <td style="padding: 10px; border-bottom: 1px solid #333;">${incident.monitor_name || 'Unknown'}</td>
+                <td style="padding: 10px; border-bottom: 1px solid #333;">${formattedDate}</td>
+                <td style="padding: 10px; border-bottom: 1px solid #333;">${eventType}</td>
+                <td style="padding: 10px; border-bottom: 1px solid #333;">${incident.reason.htmlentities || 'No reason provided'}</td>
             `;
-            table.appendChild(thead);
+            tbody.appendChild(row);
+        });
 
-            // Create body
-            const tbody = document.createElement('tbody');
-            incidents.forEach(incident => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td style="padding: 10px; border-bottom: 1px solid #333;">${incident.monitor}</td>
-                    <td style="padding: 10px; border-bottom: 1px solid #333;">${incident.time}</td>
-                    <td style="padding: 10px; border-bottom: 1px solid #333;">${incident.duration}</td>
-                    <td style="padding: 10px; border-bottom: 1px solid #333;">${incident.reason}</td>
-                `;
-                tbody.appendChild(row);
-            });
-            table.appendChild(tbody);
-
-            incidentList.appendChild(table);
-        }, 1000);
+        table.appendChild(tbody);
+        incidentList.appendChild(table);
     }
 
     // Function to initialize notification system
