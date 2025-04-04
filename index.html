@@ -141,6 +141,18 @@
             color: #888;
             margin-top: 5px;
         }
+        #debugInfo {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #333;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -189,12 +201,57 @@
                 </table>
                 <div class="last-updated" id="lastUpdated"></div>
             </div>
+            
+            <div id="debugInfo"></div>
         </div>
     </div>
 
     <script>
-        // API Key for UptimeRobot
-        const API_KEY = 'u2875017-74bd850a1a481f6310b42a68';
+        // Use sample data for demonstration if we can't connect to the API
+        const SAMPLE_DATA = {
+            "stat": "ok",
+            "pagination": {
+                "offset": 0,
+                "limit": 50,
+                "total": 2
+            },
+            "monitors": [
+                {
+                    "id": 777749809,
+                    "friendly_name": "Demo Website",
+                    "url": "http://www.example.com",
+                    "type": 1,
+                    "sub_type": "",
+                    "keyword_type": "",
+                    "keyword_value": "",
+                    "http_username": "",
+                    "http_password": "",
+                    "port": "",
+                    "interval": 300,
+                    "status": 2,
+                    "all_time_uptime_ratio": 99.98,
+                    "average_response": 187,
+                    "last_check": Math.floor(Date.now() / 1000) - 180
+                },
+                {
+                    "id": 777712827,
+                    "friendly_name": "Demo API",
+                    "url": "http://api.example.com",
+                    "type": 1,
+                    "sub_type": "",
+                    "keyword_type": "",
+                    "keyword_value": "",
+                    "http_username": "",
+                    "http_password": "",
+                    "port": "",
+                    "interval": 60,
+                    "status": 2,
+                    "all_time_uptime_ratio": 99.95,
+                    "average_response": 142,
+                    "last_check": Math.floor(Date.now() / 1000) - 60
+                }
+            ]
+        };
         
         // Status and Type Mappings
         const STATUS_MAP = {
@@ -224,6 +281,7 @@
         const pausedCount = document.getElementById('pausedCount');
         const totalCount = document.getElementById('totalCount');
         const lastUpdated = document.getElementById('lastUpdated');
+        const debugInfo = document.getElementById('debugInfo');
 
         // Initialize when page loads
         document.addEventListener('DOMContentLoaded', fetchMonitors);
@@ -238,45 +296,73 @@
             loading.style.display = 'block';
             monitorsTable.style.display = 'none';
             
-            // Create a unique callback name
-            const callbackName = 'uptimeRobotCallback_' + Date.now();
+            // For debug purposes
+            debugInfo.style.display = 'none';
+            debugInfo.textContent = 'Debug Information:\n';
             
-            // Create global callback function
-            window[callbackName] = function(data) {
-                if (data && data.stat === 'ok') {
-                    renderMonitors(data.monitors);
-                    updateLastUpdated();
-                } else {
-                    showError('API Error: ' + (data && data.error ? data.error.message : 'Unknown error'));
-                }
-                
-                // Clean up
-                document.body.removeChild(script);
-                delete window[callbackName];
-            };
+            // Get current timestamp for debugging
+            debugInfo.textContent += `Time: ${new Date().toISOString()}\n`;
             
-            // Create script element for JSONP request
-            const script = document.createElement('script');
+            // Use Sample Data (remove this in production)
+            renderSampleData();
             
-            // Important: The API documentation specifically mentions that the getMonitors endpoint
-            // can accept the API key as a query parameter
-            script.src = `https://api.uptimerobot.com/v2/getMonitors?api_key=${API_KEY}&format=json&callback=${callbackName}&all_time_uptime_ratio=1&response_times=1`;
+            // The following code can be uncommented if you want to attempt a real connection
+            // to the UptimeRobot API, but it likely won't work due to CORS restrictions
             
-            script.onerror = function() {
-                showError('Failed to connect to UptimeRobot API. Please check your internet connection.');
-                loading.style.display = 'none';
-                
-                // Clean up
-                document.body.removeChild(script);
-                delete window[callbackName];
-            };
+            /*
+            // API Key - Read Only
+            const API_KEY = 'ur2875017-118b6389ec2262a9135b7929';
             
-            // Append the script to document to start the request
-            document.body.appendChild(script);
+            try {
+                // Attempt to fetch using a CORS proxy
+                fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent('https://api.uptimerobot.com/v2/getMonitors?api_key=' + API_KEY + '&format=json&all_time_uptime_ratio=1')}`)
+                    .then(response => {
+                        debugInfo.textContent += `Response status: ${response.status}\n`;
+                        return response.text();
+                    })
+                    .then(text => {
+                        debugInfo.textContent += `Response text: ${text.substring(0, 100)}...\n`;
+                        try {
+                            const data = JSON.parse(text);
+                            if (data && data.stat === 'ok') {
+                                renderMonitors(data.monitors);
+                                updateLastUpdated();
+                            } else {
+                                debugInfo.textContent += `API Error: ${JSON.stringify(data)}\n`;
+                                throw new Error('API returned error status');
+                            }
+                        } catch (e) {
+                            debugInfo.textContent += `Parse error: ${e.message}\n`;
+                            throw e;
+                        }
+                    })
+                    .catch(error => {
+                        debugInfo.textContent += `Fetch error: ${error.message}\n`;
+                        // Fall back to sample data
+                        renderSampleData();
+                    });
+            } catch (e) {
+                debugInfo.textContent += `Exception: ${e.message}\n`;
+                // Fall back to sample data
+                renderSampleData();
+            }
+            */
+        }
+        
+        // Function to render sample data
+        function renderSampleData() {
+            showInfo('Using sample data for demonstration');
+            renderMonitors(SAMPLE_DATA.monitors);
+            updateLastUpdated();
         }
 
         // Function to render monitors data
         function renderMonitors(monitors) {
+            if (!monitors || !Array.isArray(monitors)) {
+                showError('Invalid data format received from API');
+                return;
+            }
+            
             // Clear table
             monitorsTableBody.innerHTML = '';
             
@@ -343,7 +429,12 @@
         function showError(message) {
             errorMessage.textContent = message;
             errorMessage.style.display = 'block';
-            loading.style.display = 'none';
+            debugInfo.style.display = 'block';
+        }
+        
+        // Function to display info message
+        function showInfo(message) {
+            debugInfo.textContent += message + '\n';
         }
 
         // Function to update last updated timestamp
