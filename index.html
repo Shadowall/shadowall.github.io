@@ -9,8 +9,8 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f5f7fa;
-            color: #333;
+            background-color: #1e1e1e;
+            color: #e0e0e0;
         }
         .container {
             max-width: 1200px;
@@ -23,7 +23,7 @@
             align-items: center;
             margin-bottom: 20px;
             padding-bottom: 10px;
-            border-bottom: 1px solid #ddd;
+            border-bottom: 1px solid #444;
         }
         .logo {
             font-size: 24px;
@@ -40,8 +40,8 @@
             margin: 0 10px;
             padding: 15px;
             border-radius: 6px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            background-color: #2d2d2d;
             text-align: center;
         }
         .status-card.up {
@@ -56,7 +56,7 @@
         .status-card h3 {
             margin-top: 0;
             font-size: 16px;
-            color: #555;
+            color: #aaa;
         }
         .status-card .count {
             font-size: 32px;
@@ -64,9 +64,9 @@
             margin: 10px 0;
         }
         .monitors-list {
-            background-color: white;
+            background-color: #2d2d2d;
             border-radius: 6px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
             overflow: hidden;
         }
         .monitors-list table {
@@ -76,12 +76,12 @@
         .monitors-list th {
             text-align: left;
             padding: 12px 15px;
-            background-color: #f1f1f1;
+            background-color: #333;
             font-weight: 600;
         }
         .monitors-list td {
             padding: 12px 15px;
-            border-top: 1px solid #eee;
+            border-top: 1px solid #444;
         }
         .status-indicator {
             display: inline-block;
@@ -106,8 +106,8 @@
             background-color: #005a9e;
         }
         .error-message {
-            background-color: #ffebee;
-            color: #c62828;
+            background-color: #5e0000;
+            color: #ff9999;
             padding: 15px;
             border-radius: 4px;
             margin-bottom: 20px;
@@ -117,11 +117,11 @@
             text-align: center;
             padding: 30px;
             font-size: 18px;
-            color: #666;
+            color: #aaa;
         }
         .uptime-bar {
             height: 8px;
-            background-color: #eee;
+            background-color: #444;
             border-radius: 4px;
             overflow: hidden;
             margin-top: 5px;
@@ -132,14 +132,50 @@
         }
         .last-check {
             font-size: 12px;
-            color: #777;
+            color: #888;
             margin-top: 5px;
         }
         .last-updated {
             text-align: right;
             font-size: 12px;
-            color: #777;
+            color: #888;
             margin-top: 5px;
+        }
+        .mode-selector {
+            margin-bottom: 20px;
+        }
+        .mode-selector label {
+            margin-right: 15px;
+            cursor: pointer;
+        }
+        .mode-selector input[type="radio"] {
+            margin-right: 5px;
+        }
+        .tab-container {
+            margin-top: 20px;
+        }
+        .tab-buttons {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        .tab-button {
+            padding: 8px 15px;
+            background-color: #333;
+            border: none;
+            color: #ccc;
+            cursor: pointer;
+            margin-right: 5px;
+            border-radius: 4px 4px 0 0;
+        }
+        .tab-button.active {
+            background-color: #0078d4;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
         }
     </style>
 </head>
@@ -151,6 +187,18 @@
         </div>
 
         <div id="errorMessage" class="error-message"></div>
+
+        <div class="mode-selector">
+            <label>
+                <input type="radio" name="mode" value="cors-proxy" checked> Use CORS Proxy (Recommended)
+            </label>
+            <label>
+                <input type="radio" name="mode" value="script-tag"> Use Script Tag Method
+            </label>
+            <label>
+                <input type="radio" name="mode" value="jsonp"> Use JSONP Method
+            </label>
+        </div>
 
         <div id="dashboard">
             <div class="status-summary" id="statusSummary">
@@ -172,29 +220,63 @@
                 </div>
             </div>
 
-            <div class="monitors-list" id="monitorsList">
-                <div id="loading" class="loading">Loading monitors data...</div>
-                <table id="monitorsTable" style="display: none;">
-                    <thead>
-                        <tr>
-                            <th>Monitor Name</th>
-                            <th>Type</th>
-                            <th>Status</th>
-                            <th>Uptime (30 days)</th>
-                            <th>Last Check</th>
-                        </tr>
-                    </thead>
-                    <tbody id="monitorsTableBody">
-                    </tbody>
-                </table>
-                <div class="last-updated" id="lastUpdated"></div>
+            <div class="tab-container">
+                <div class="tab-buttons">
+                    <button class="tab-button active" data-tab="monitors">Monitors</button>
+                    <button class="tab-button" data-tab="account">Account Info</button>
+                </div>
+                
+                <div id="monitors-tab" class="tab-content active">
+                    <div class="monitors-list" id="monitorsList">
+                        <div id="loading" class="loading">Loading monitors data...</div>
+                        <table id="monitorsTable" style="display: none;">
+                            <thead>
+                                <tr>
+                                    <th>Monitor Name</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Uptime</th>
+                                    <th>Last Check</th>
+                                </tr>
+                            </thead>
+                            <tbody id="monitorsTableBody">
+                            </tbody>
+                        </table>
+                        <div class="last-updated" id="lastUpdated"></div>
+                    </div>
+                </div>
+                
+                <div id="account-tab" class="tab-content">
+                    <div class="monitors-list">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th colspan="2">Account Information</th>
+                                </tr>
+                            </thead>
+                            <tbody id="accountInfoBody">
+                                <tr>
+                                    <td>Email</td>
+                                    <td id="accountEmail">Loading...</td>
+                                </tr>
+                                <tr>
+                                    <td>Monitor Limit</td>
+                                    <td id="monitorLimit">Loading...</td>
+                                </tr>
+                                <tr>
+                                    <td>Monitor Interval</td>
+                                    <td id="monitorInterval">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
         // Constants
-        const API_URL = 'https://api.uptimerobot.com/v2/getMonitors';
         const API_KEY = 'u2875017-74bd850a1a481f6310b42a68'; // Pre-integrated API key
         
         const STATUS_MAP = {
@@ -211,6 +293,13 @@
             4: 'Port',
             5: 'Heartbeat'
         };
+        
+        // Proxy URLs - multiple options to try
+        const PROXY_URLS = [
+            'https://corsproxy.io/?',
+            'https://cors-anywhere.herokuapp.com/',
+            'https://api.allorigins.win/raw?url='
+        ];
 
         // DOM Elements
         const dashboard = document.getElementById('dashboard');
@@ -224,52 +313,250 @@
         const pausedCount = document.getElementById('pausedCount');
         const totalCount = document.getElementById('totalCount');
         const lastUpdated = document.getElementById('lastUpdated');
+        const modeSelector = document.querySelectorAll('input[name="mode"]');
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        // Account info elements
+        const accountEmail = document.getElementById('accountEmail');
+        const monitorLimit = document.getElementById('monitorLimit');
+        const monitorInterval = document.getElementById('monitorInterval');
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
-            fetchMonitors();
+            fetchData();
+            
+            // Set up tab switching
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const tabName = this.getAttribute('data-tab');
+                    
+                    // Remove active class from all buttons and contents
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabContents.forEach(content => content.classList.remove('active'));
+                    
+                    // Add active class to current button and content
+                    this.classList.add('active');
+                    if (tabName === 'monitors') {
+                        document.getElementById('monitors-tab').classList.add('active');
+                    } else if (tabName === 'account') {
+                        document.getElementById('account-tab').classList.add('active');
+                    }
+                });
+            });
         });
 
         // Event Listeners
-        refreshBtn.addEventListener('click', function() {
-            fetchMonitors();
+        refreshBtn.addEventListener('click', fetchData);
+        
+        modeSelector.forEach(radio => {
+            radio.addEventListener('change', fetchData);
         });
 
-        // Functions
+        function getSelectedMode() {
+            let mode = 'cors-proxy'; // Default
+            modeSelector.forEach(radio => {
+                if (radio.checked) {
+                    mode = radio.value;
+                }
+            });
+            return mode;
+        }
+
+        // Main function to fetch all data
+        function fetchData() {
+            fetchMonitors();
+            fetchAccountDetails();
+        }
+        
+        // Function to get account details
+        function fetchAccountDetails() {
+            const mode = getSelectedMode();
+            
+            // Clear previous errors
+            errorMessage.style.display = 'none';
+            
+            // Reset account info
+            accountEmail.textContent = 'Loading...';
+            monitorLimit.textContent = 'Loading...';
+            monitorInterval.textContent = 'Loading...';
+            
+            if (mode === 'cors-proxy') {
+                fetchWithCorsProxy('getAccountDetails', {}, handleAccountResponse);
+            } else if (mode === 'script-tag') {
+                fetchWithScriptTag('getAccountDetails', {}, handleAccountResponse);
+            } else if (mode === 'jsonp') {
+                fetchWithJsonp('getAccountDetails', {}, handleAccountResponse);
+            }
+        }
+
+        // Functions to fetch monitors
         function fetchMonitors() {
             // Reset UI
             errorMessage.style.display = 'none';
             loading.style.display = 'block';
             monitorsTable.style.display = 'none';
             
-            // Prepare request data
-            const data = new FormData();
-            data.append('api_key', API_KEY);
-            data.append('format', 'json');
-            data.append('all_time_uptime_ratio', '1');
-            data.append('response_times', '1');
-            data.append('logs', '1');
+            const mode = getSelectedMode();
             
-            // Make API request
-            fetch(API_URL, {
+            const params = {
+                logs: 1,
+                response_times: 1,
+                all_time_uptime_ratio: 1
+            };
+            
+            if (mode === 'cors-proxy') {
+                fetchWithCorsProxy('getMonitors', params, handleMonitorsResponse);
+            } else if (mode === 'script-tag') {
+                fetchWithScriptTag('getMonitors', params, handleMonitorsResponse);
+            } else if (mode === 'jsonp') {
+                fetchWithJsonp('getMonitors', params, handleMonitorsResponse);
+            }
+        }
+        
+        // CORS Proxy Method
+        function fetchWithCorsProxy(endpoint, params, callback) {
+            // Try each proxy in order until one works
+            tryNextProxy(0, endpoint, params, callback);
+        }
+        
+        function tryNextProxy(index, endpoint, params, callback) {
+            if (index >= PROXY_URLS.length) {
+                showError('All proxies failed. Try another method.');
+                loading.style.display = 'none';
+                return;
+            }
+            
+            const proxyUrl = PROXY_URLS[index];
+            const targetUrl = encodeURIComponent(`https://api.uptimerobot.com/v2/${endpoint}`);
+            
+            // Create form data
+            const formData = new FormData();
+            formData.append('api_key', API_KEY);
+            formData.append('format', 'json');
+            
+            for (const key in params) {
+                formData.append(key, params[key]);
+            }
+            
+            // Make the request through the proxy
+            fetch(proxyUrl + targetUrl, {
                 method: 'POST',
-                body: data
+                body: formData
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.stat === 'ok') {
-                    renderMonitors(data.monitors);
-                    updateLastUpdated();
+                    callback(data);
                 } else {
-                    showError('API Error: ' + (data.error?.message || 'Unknown error'));
+                    throw new Error('API Error: ' + (data.error ? data.error.message : 'Unknown error'));
                 }
             })
             .catch(error => {
-                showError('Network Error: ' + error.message);
-            })
-            .finally(() => {
-                loading.style.display = 'none';
+                console.error('Proxy failed:', proxyUrl, error);
+                // Try the next proxy
+                tryNextProxy(index + 1, endpoint, params, callback);
             });
+        }
+        
+        // Script Tag Method (works in most cases)
+        function fetchWithScriptTag(endpoint, params, callback) {
+            // Create a unique callback name
+            const callbackName = 'uptimeRobotCallback_' + Math.floor(Math.random() * 1000000);
+            
+            // Create the script URL
+            let scriptUrl = `https://api.uptimerobot.com/v2/${endpoint}?api_key=${API_KEY}&format=json&callback=${callbackName}`;
+            
+            for (const key in params) {
+                scriptUrl += `&${key}=${params[key]}`;
+            }
+            
+            // Create a global callback function
+            window[callbackName] = function(data) {
+                // Process the data
+                if (data.stat === 'ok') {
+                    callback(data);
+                } else {
+                    showError('API Error: ' + (data.error ? data.error.message : 'Unknown error'));
+                }
+                
+                // Clean up
+                document.body.removeChild(script);
+                delete window[callbackName];
+            };
+            
+            // Create and append the script tag
+            const script = document.createElement('script');
+            script.src = scriptUrl;
+            script.onerror = function() {
+                showError('Script tag method failed. Try another method.');
+                loading.style.display = 'none';
+                // Clean up
+                document.body.removeChild(script);
+                delete window[callbackName];
+            };
+            
+            document.body.appendChild(script);
+        }
+        
+        // JSONP Method (alternative approach)
+        function fetchWithJsonp(endpoint, params, callback) {
+            // Use the getMonitors endpoint with the API key as a parameter (allowed by UptimeRobot)
+            let apiUrl = `https://api.uptimerobot.com/v2/${endpoint}?api_key=${API_KEY}&format=json`;
+            
+            for (const key in params) {
+                apiUrl += `&${key}=${params[key]}`;
+            }
+            
+            // Add a unique callback parameter
+            const jsonpCallback = 'jsonUptimeRobotApi_' + Math.floor(Math.random() * 1000000);
+            apiUrl += `&callback=${jsonpCallback}`;
+            
+            // Create a global callback function
+            window[jsonpCallback] = function(data) {
+                if (data.stat === 'ok') {
+                    callback(data);
+                } else {
+                    showError('API Error: ' + (data.error ? data.error.message : 'Unknown error'));
+                }
+                
+                // Clean up
+                document.body.removeChild(script);
+                delete window[jsonpCallback];
+            };
+            
+            // Create and append the script tag
+            const script = document.createElement('script');
+            script.src = apiUrl;
+            script.onerror = function() {
+                showError('JSONP method failed. Try another method.');
+                loading.style.display = 'none';
+                // Clean up
+                document.body.removeChild(script);
+                delete window[jsonpCallback];
+            };
+            
+            document.body.appendChild(script);
+        }
+        
+        // Response handlers
+        function handleMonitorsResponse(data) {
+            renderMonitors(data.monitors);
+            updateLastUpdated();
+            loading.style.display = 'none';
+        }
+        
+        function handleAccountResponse(data) {
+            if (data.account) {
+                accountEmail.textContent = data.account.email || 'Not available';
+                monitorLimit.textContent = data.account.monitor_limit || 'Not available';
+                monitorInterval.textContent = `${data.account.monitor_interval || 'N/A'} seconds`;
+            }
         }
 
         function renderMonitors(monitors) {
@@ -291,9 +578,12 @@
                 // Create table row
                 const row = document.createElement('tr');
                 
-                // Format last check time
-                const lastCheck = new Date(monitor.last_check * 1000);
-                const lastCheckFormatted = lastCheck.toLocaleString();
+                // Format last check time if available
+                let lastCheckFormatted = 'N/A';
+                if (monitor.last_check) {
+                    const lastCheck = new Date(monitor.last_check * 1000);
+                    lastCheckFormatted = lastCheck.toLocaleString();
+                }
                 
                 // Calculate uptime percentage
                 const uptimePercent = parseFloat(monitor.all_time_uptime_ratio) || 0;
@@ -342,7 +632,7 @@
         }
 
         // Auto-refresh data every 5 minutes
-        setInterval(fetchMonitors, 300000);
+        setInterval(fetchData, 300000);
     </script>
 </body>
 </html>
