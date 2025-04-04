@@ -415,6 +415,7 @@
 
         // Process and display each monitor
         monitors.forEach(monitor => {
+            console.log(`Monitor ${monitor.friendly_name} last_check:`, monitor.last_check);
             // Update counters
             if (monitor.status === 2) upCounter++;
             else if (monitor.status === 8 || monitor.status === 9) {
