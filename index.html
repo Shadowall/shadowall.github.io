@@ -800,17 +800,13 @@
             let reasonText = 'No reason provided';
             if (incident.reason) {
                 if (typeof incident.reason === 'object') {
-                    if (incident.reason.htmlentities) {
-                        reasonText = incident.reason.htmlentities;
-                    } else if (incident.reason.message) {
-                        reasonText = incident.reason.message;
-                    } else {
-                        // Try to convert object to string representation
-                        try {
-                            reasonText = JSON.stringify(incident.reason);
-                        } catch (e) {
-                            reasonText = 'Complex reason (object)';
-                        }
+                    // Try to parse JSON structure
+                    try {
+                        reasonText = JSON.stringify(incident.reason);
+                        // Make it more readable by removing quotes around keys
+                        reasonText = reasonText.replace(/"([^"]+)":/g, '$1:');
+                    } catch (e) {
+                        reasonText = 'Complex reason (object)';
                     }
                 } else {
                     reasonText = incident.reason;
