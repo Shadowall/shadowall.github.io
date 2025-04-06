@@ -705,7 +705,11 @@
                         monitor.logs.forEach(log => {
                             // Add monitor name to the log
                             log.monitor_name = monitor.friendly_name;
-                            allIncidents.push(log);
+                            
+                            // Only add if it's a Down or Up event
+                            if (log.type === 1 || log.type === 2) {
+                                allIncidents.push(log);
+                            }
                         });
                     }
                 });
@@ -792,10 +796,26 @@
                 row.style.backgroundColor = rowColor;
             }
 
-            // Create safe content for reason
-            const reasonText = incident.reason && incident.reason.htmlentities ? 
-                incident.reason.htmlentities : 
-                (incident.reason || 'No reason provided');
+            // Create safe content for reason - handle object case
+            let reasonText = 'No reason provided';
+            if (incident.reason) {
+                if (typeof incident.reason === 'object') {
+                    if (incident.reason.htmlentities) {
+                        reasonText = incident.reason.htmlentities;
+                    } else if (incident.reason.message) {
+                        reasonText = incident.reason.message;
+                    } else {
+                        // Try to convert object to string representation
+                        try {
+                            reasonText = JSON.stringify(incident.reason);
+                        } catch (e) {
+                            reasonText = 'Complex reason (object)';
+                        }
+                    }
+                } else {
+                    reasonText = incident.reason;
+                }
+            }
 
             row.innerHTML = `
                 <td style="padding: 10px; border-bottom: 1px solid #333;">${incident.monitor_name || 'Unknown'}</td>
