@@ -1,941 +1,369 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UptimeRobot Dashboard</title>
+    <title>Chris "Topher" - Official Dad Appreciation Website</title>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(45deg, #87CEEB, #E0E0E0);
+            font-family: 'Times New Roman', serif;
             margin: 0;
             padding: 0;
-            background-color: #1e1e1e;
-            color: #e0e0e0;
+            background-attachment: fixed;
         }
+        
+        .header {
+            background: #000080;
+            color: #FFFF00;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 5px solid #FF0000;
+        }
+        
+        .header h1 {
+            font-family: 'Comic Sans MS', cursive;
+            font-size: 28px;
+            margin: 0;
+            text-shadow: 2px 2px 4px #000000;
+        }
+        
+        .marquee {
+            background: #FFFF00;
+            color: #FF0000;
+            padding: 10px;
+            font-weight: bold;
+            font-family: 'Comic Sans MS', cursive;
+            border: 3px solid #000000;
+        }
+        
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
+            max-width: 800px;
+            margin: 20px auto;
+            background: #FFFFFF;
+            border: 3px solid #000000;
             padding: 20px;
         }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #444;
-        }
-        .logo {
-            font-size: 24px;
-            font-weight: bold;
-            color: #0078d4;
-        }
-        .status-summary {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-        .status-card {
-            flex: 1;
-            margin: 0 10px;
-            padding: 15px;
-            border-radius: 6px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            background-color: #2d2d2d;
+        
+        .nav {
+            background: #C0C0C0;
+            padding: 10px;
             text-align: center;
-        }
-        .status-card.up {
-            border-left: 5px solid #4caf50;
-        }
-        .status-card.down {
-            border-left: 5px solid #f44336;
-        }
-        .status-card.paused {
-            border-left: 5px solid #ff9800;
-        }
-        .status-card h3 {
-            margin-top: 0;
-            font-size: 16px;
-            color: #aaa;
-        }
-        .status-card .count {
-            font-size: 32px;
-            font-weight: bold;
-            margin: 10px 0;
-        }
-        .monitors-list {
-            background-color: #2d2d2d;
-            border-radius: 6px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            overflow: hidden;
+            border: 2px inset #C0C0C0;
             margin-bottom: 20px;
         }
-        .monitors-list table {
+        
+        .nav a {
+            color: #0000EE;
+            text-decoration: none;
+            margin: 0 15px;
+            font-weight: bold;
+        }
+        
+        .nav a:visited {
+            color: #551A8B;
+        }
+        
+        .section {
+            margin: 30px 0;
+            padding: 15px;
+            border: 2px solid #000000;
+            background: #F0F8FF;
+        }
+        
+        .section h2 {
+            font-family: 'Comic Sans MS', cursive;
+            color: #FF6600;
+            font-size: 22px;
+            text-align: center;
+            margin-top: 0;
+        }
+        
+        .stats-table {
             width: 100%;
             border-collapse: collapse;
+            font-family: 'Courier New', monospace;
         }
-        .monitors-list th {
-            text-align: left;
-            padding: 12px 15px;
-            background-color: #333;
-            font-weight: 600;
+        
+        .stats-table td {
+            border: 1px solid #000000;
+            padding: 8px;
+            background: #FFFFCC;
         }
-        .monitors-list td {
-            padding: 12px 15px;
-            border-top: 1px solid #444;
-        }
-        .status-indicator {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            margin-right: 8px;
-        }
-        .status-up { background-color: #4caf50; }
-        .status-down { background-color: #f44336; }
-        .status-paused { background-color: #ff9800; }
-        .refresh-btn {
-            background-color: #0078d4;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        .refresh-btn:hover {
-            background-color: #005a9e;
-        }
-        .error-message {
-            background-color: #5e0000;
-            color: #ff9999;
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-            display: none;
-        }
-        .loading {
-            text-align: center;
-            padding: 30px;
-            font-size: 18px;
-            color: #aaa;
-        }
-        .uptime-bar {
-            height: 8px;
-            background-color: #444;
-            border-radius: 4px;
-            overflow: hidden;
-            margin-top: 5px;
-        }
-        .uptime-value {
-            height: 100%;
-            background-color: #4caf50;
-        }
-        .last-updated {
-            text-align: right;
-            font-size: 12px;
-            color: #888;
-            margin-top: 5px;
-        }
-        .down-monitors {
-            margin-top: 20px;
-            background-color: #442222;
-            border-radius: 6px;
-            padding: 15px;
-            margin-bottom: 20px;
-            display: none;
-        }
-        .down-monitors h3 {
-            color: #f44336;
-            margin-top: 0;
-            margin-bottom: 10px;
-        }
-        .down-monitors ul {
-            margin: 0;
-            padding-left: 20px;
-        }
-        .down-monitors li {
-            margin-bottom: 5px;
-        }
-        .last-24-hours {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 30px;
-        }
-        .metric-card {
-            flex: 1;
-            margin: 0 10px;
-            padding: 15px;
-            border-radius: 6px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            background-color: #2d2d2d;
-        }
-        .metric-card h3 {
-            margin-top: 0;
-            font-size: 16px;
-            color: #aaa;
-            margin-bottom: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .metric-card h3 .more-btn {
-            font-size: 20px;
-            cursor: pointer;
-            color: #888;
-        }
-        .metric-value {
-            font-size: 32px;
+        
+        .stats-table td:first-child {
+            background: #CCCCFF;
             font-weight: bold;
-            margin-bottom: 5px;
-            color: #4caf50;
         }
-        .metric-label {
-            font-size: 12px;
-            color: #888;
+        
+        .blink {
+            animation: blink 1s infinite;
         }
-        .metric-row {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 15px;
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
         }
-        .metric-col {
-            flex: 1;
-        }
-        #debugInfo {
-            margin-top: 20px;
+        
+        .counter {
+            background: #000000;
+            color: #00FF00;
+            font-family: 'Courier New', monospace;
             padding: 10px;
-            background-color: #333;
-            border-radius: 4px;
-            font-family: monospace;
-            white-space: pre-wrap;
-            font-size: 12px;
+            text-align: center;
+            border: 3px inset #C0C0C0;
+            margin: 20px 0;
+        }
+        
+        .memory-box {
+            background: #FFFFCC;
+            border: 2px dashed #FF6600;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .photo-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .photo-frame {
+            border: 3px solid #8B4513;
+            padding: 5px;
+            background: #DEB887;
+            text-align: center;
+            box-shadow: 2px 2px 5px #666;
+        }
+        
+        .photo-frame img {
+            width: 100%;
             max-height: 200px;
-            overflow-y: auto;
-            display: none;
+            object-fit: cover;
+            border: 1px solid #000;
+        }
+        
+        .photo-caption {
+            font-family: 'Comic Sans MS', cursive;
+            font-size: 12px;
+            color: #8B4513;
+            margin-top: 5px;
+            font-weight: bold;
+        }
+
+        
+        .thank-you {
+            background: #FFE4E1;
+            border: 3px solid #FF69B4;
+            padding: 20px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .footer {
+            background: #000080;
+            color: #FFFFFF;
+            text-align: center;
+            padding: 15px;
+            margin-top: 30px;
+            font-family: 'Comic Sans MS', cursive;
+        }
+        
+        .rotating {
+            display: inline-block;
+            animation: rotate 2s linear infinite;
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .under-construction {
+            color: #FF0000;
+            font-weight: bold;
+            text-decoration: blink;
         }
     </style>
 </head>
 <body>
-<div class="container">
     <div class="header">
-        <div class="logo">UptimeRobot Integration</div>
-        <button id="refreshBtn" class="refresh-btn">Refresh Data</button>
-    </div>
-
-    <div id="errorMessage" class="error-message"></div>
-
-    <div id="downMonitors" class="down-monitors">
-        <h3>⚠️ Down Monitors</h3>
-        <ul id="downMonitorsList"></ul>
-    </div>
-
-    <!-- Current Status Section -->
-    <div class="monitors-list">
-        <h3 style="padding: 15px; margin: 0; border-bottom: 1px solid #444;">Current status</h3>
-        <div style="padding: 15px;">
-            <div class="status-summary">
-                <div class="status-card down">
-                    <h3>Down</h3>
-                    <div class="count" id="downCount">0</div>
-                </div>
-                <div class="status-card up">
-                    <h3>Up</h3>
-                    <div class="count" id="upCount">0</div>
-                </div>
-                <div class="status-card paused">
-                    <h3>Paused</h3>
-                    <div class="count" id="pausedCount">0</div>
-                </div>
-            </div>
-            <div style="text-align: center; margin-top: 10px;">
-                <div id="monitoringStatus">Using 0 of 50 monitors.</div>
-                <a href="#" style="color: #4caf50; text-decoration: none; font-size: 14px;">Need more?</a>
-            </div>
+        <h1>🎉 CHRIS "TOPHER" APPRECIATION CENTRAL 🎉</h1>
+        <div style="font-size: 14px; margin-top: 10px;">
+            Official Father's Day Website • Est. 2025 • <span class="blink">100% Dad Approved!</span>
         </div>
     </div>
-
-    <!-- Last 24 Hours Section -->
-    <div class="monitors-list">
-        <h3 style="padding: 15px; margin: 0; border-bottom: 1px solid #444; display: flex; justify-content: space-between;">
-            Last 24 hours
-            <span class="more-btn">...</span>
-        </h3>
-        <div style="padding: 15px;">
-            <div class="metric-row">
-                <div class="metric-col">
-                    <div class="metric-value" id="overallUptime" style="color: #4caf50;">--.---%</div>
-                    <div class="metric-label">Overall uptime</div>
-                </div>
-                <div class="metric-col">
-                    <div class="metric-value" id="incidentCount">-</div>
-                    <div class="metric-label">Incidents</div>
-                </div>
-            </div>
-            <div class="metric-row">
-                <div class="metric-col">
-                    <div class="metric-value" id="timeWithoutIncidents">--h, --m</div>
-                    <div class="metric-label">Without incidents</div>
-                </div>
-                <div class="metric-col">
-                    <div class="metric-value" id="affectedMonitors">-</div>
-                    <div class="metric-label">Affected monitors</div>
-                </div>
-            </div>
-        </div>
+    
+    <div class="marquee">
+        <marquee>🔥 HAPPY FATHER'S DAY TO THE WORLD'S #1 DAD! 🔥 This website was built with Microsoft FrontPage Express! 🔥 Best viewed at 1024x768 resolution! 🔥</marquee>
     </div>
-
-    <!-- Search and Filter Options -->
-    <div style="margin: 20px 0; display: flex; justify-content: space-between; align-items: center;">
-        <div>
-            <input type="text" id="searchMonitors" placeholder="Search monitors..." style="padding: 8px; background: #333; color: #e0e0e0; border: 1px solid #555; border-radius: 4px; width: 250px;">
+    
+    <div class="container">
+        <div class="counter">
+            >>> You are appreciation visitor #000001 <<<
+            (Because you're the only one that matters!)
         </div>
-        <div>
-            <select id="statusFilter" style="padding: 8px; background: #333; color: #e0e0e0; border: 1px solid #555; border-radius: 4px; margin-right: 10px;">
-                <option value="all">All Statuses</option>
-                <option value="up">Up</option>
-                <option value="down">Down</option>
-                <option value="paused">Maintenance</option>
-            </select>
-            <select id="typeFilter" style="padding: 8px; background: #333; color: #e0e0e0; border: 1px solid #555; border-radius: 4px;">
-                <option value="all">All Types</option>
-                <option value="1">HTTP(S)</option>
-                <option value="2">Keyword</option>
-                <option value="3">Ping</option>
-                <option value="4">Port</option>
-                <option value="5">Heartbeat</option>
-            </select>
-        </div>
-    </div>
+        
+        <div class="nav">
+            <a href="#home">• HOME •</a>
+            <a href="#database">• DAD DATABASE •</a>
+            <a href="#memories">• MEMORY VAULT •</a>
 
-    <div id="dashboard">
-        <div class="monitors-list" id="monitorsList">
-            <div id="loading" class="loading">Loading monitors data...</div>
-            <table id="monitorsTable" style="display: none;">
-                <thead>
+            <a href="#thanks">• THANK YOU •</a>
+            <a href="#contact">• CONTACT DAD •</a>
+        </div>
+        
+        <div id="home" class="section">
+            <h2>🏠 WELCOME TO DAD.COM! 🏠</h2>
+            <p style="text-align: center; font-size: 16px;">
+                <strong>Greetings, Internet User!</strong><br><br>
+                Welcome to the official appreciation website for Chris "Topher" - 
+                Professional Dad, Golf Enthusiast, Pizza Empire Owner, and Master of Inappropriately Timing Jokes!
+                <br><br>
+                <span class="rotating">⭐</span> This site was built from scratch using cutting-edge HTML technology! <span class="rotating">⭐</span>
+                <br><br>
+                <em>Last Updated: Father's Day 2025 (I am very good with computers now)</em>
+            </p>
+        </div>
+        
+        <div id="database" class="section">
+            <h2>📊 OFFICIAL DAD DATABASE 📊</h2>
+            <table class="stats-table">
                 <tr>
-                    <th>Monitor Name</th>
-                    <th>Type</th>
-                    <th>Status</th>
-                    <th>Uptime</th>
+                    <td>Dad Level:</td>
+                    <td><strong>MAXIMUM ACHIEVEMENT UNLOCKED</strong></td>
                 </tr>
-                </thead>
-                <tbody id="monitorsTableBody">
-                </tbody>
+                <tr>
+                    <td>Years of Service:</td>
+                    <td>30 years and counting</td>
+                </tr>
+                <tr>
+                    <td>Dad Jokes Delivered:</td>
+                    <td>47,293</td>
+                </tr>
+                <tr>
+                    <td>Financial Rescues:</td>
+                    <td>COUNTLESS (Hero status achieved)</td>
+                </tr>
+                <tr>
+                    <td>Complex Math Solutions:</td>
+                    <td>Calculated in head faster than calculator</td>
+                </tr>
+                <tr>
+                    <td>Cooking Level:</td>
+                    <td>EXCELLENT (Pizza empire evidence)</td>
+                </tr>
+                <tr>
+                    <td>Witty Comeback Speed:</td>
+                    <td>INSTANT (Always has something witty to say)</td>
+                </tr>
+                <tr>
+                    <td>Problem Solving:</td>
+                    <td>GENIUS-LEVEL</td>
+                </tr>
+                <tr>
+                    <td>Current Status:</td>
+                    <td><span class="blink">STILL THE BEST DAD EVER</span></td>
+                </tr>
             </table>
-            <div class="last-updated" id="lastUpdated"></div>
         </div>
+        
+        <div id="memories" class="section">
+            <h2>💾 MEMORY VAULT & PHOTO GALLERY 💾</h2>
+            
+            <div class="photo-gallery">
+                <div class="photo-frame">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='150'%3E%3Crect width='200' height='150' fill='%23f0f8ff'/%3E%3Ctext x='100' y='75' text-anchor='middle' font-family='Comic Sans MS' font-size='14' fill='%23666'%3ELAKE HOUSE%3C/text%3E%3Ctext x='100' y='95' text-anchor='middle' font-family='Comic Sans MS' font-size='14' fill='%23666'%3EFUN TIMES%3C/text%3E%3C/svg%3E" alt="Lake House Boat Day">
+                    <div class="photo-caption">Family Boat Day at the Lake House!</div>
+                </div>
+                <div class="photo-frame">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='150'%3E%3Crect width='200' height='150' fill='%23f0f8ff'/%3E%3Ctext x='100' y='70' text-anchor='middle' font-family='Comic Sans MS' font-size='14' fill='%23666'%3ECONCERT%3C/text%3E%3Ctext x='100' y='90' text-anchor='middle' font-family='Comic Sans MS' font-size='14' fill='%23666'%3EBUDDIES%3C/text%3E%3C/svg%3E" alt="Concert with Dad">
+                    <div class="photo-caption">Concert Memories - Great Times!</div>
+                </div>
+                <div class="photo-frame">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='150'%3E%3Crect width='200' height='150' fill='%23f0f8ff'/%3E%3Ctext x='100' y='70' text-anchor='middle' font-family='Comic Sans MS' font-size='14' fill='%23666'%3EFISHING%3C/text%3E%3Ctext x='100' y='90' text-anchor='middle' font-family='Comic Sans MS' font-size='14' fill='%23666'%3ESUCCESS!%3C/text%3E%3C/svg%3E" alt="Fishing Success">
+                    <div class="photo-caption">That's How We Do Fishing!</div>
+                </div>
+                <div class="photo-frame">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='150'%3E%3Crect width='200' height='150' fill='%23f0f8ff'/%3E%3Ctext x='100' y='70' text-anchor='middle' font-family='Comic Sans MS' font-size='14' fill='%23666'%3EFAMILY%3C/text%3E%3Ctext x='100' y='90' text-anchor='middle' font-family='Comic Sans MS' font-size='14' fill='%23666'%3ETIME%3C/text%3E%3C/svg%3E" alt="Family Gathering">
+                    <div class="photo-caption">The Whole Gang Together!</div>
+                </div>
+                <div class="photo-frame">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='150'%3E%3Crect width='200' height='150' fill='%23f0f8ff'/%3E%3Ctext x='100' y='70' text-anchor='middle' font-family='Comic Sans MS' font-size='14' fill='%23666'%3EVACATION%3C/text%3E%3Ctext x='100' y='90' text-anchor='middle' font-family='Comic Sans MS' font-size='14' fill='%23666'%3EVIBES%3C/text%3E%3C/svg%3E" alt="Tropical Family Vacation">
+                    <div class="photo-caption">Tropical Family Vacation Fun!</div>
+                </div>
+            </div>
+            
+            <div class="memory-box">
+                <strong>🚗 THE GREAT CALIFORNIA RESCUE MISSION (2018)</strong><br>
+                When life got dangerous in California, Dad didn't hesitate for a second. Paid for the move, paid for community college, opened his house. No questions asked, no conditions. Just "come home." Hero-level dad move right there.
+            </div>
+            
+            <div class="memory-box">
+                <strong>🎵 "SMELLS LIKE UNCLE PETER'S HOUSE" (CLASSIC)</strong><br>
+                First Rush concert. Dad notices the "aroma" in the air and announces "Man, it really smells like weed!" My response: "Ohhhhh, so THAT'S why Uncle Peter's house smells like that!" Dad laughed so hard he nearly fell over. Uncle Peter was NOT amused when Grandpa found out! 😂
+            </div>
+            
+            <div class="memory-box">
+                <strong>🖨️ THE LEGENDARY HP LASERJET & FRUGALITY LESSONS</strong><br>
+                That ancient HP LaserJet printer that survived multiple computers, OS upgrades, and decades of faithful service. A testament to Dad's frugality teachings - why replace something that still works? When Windows 11 finally defeated it, Dad passed it on saying "You're the tech guy now." I got it working! Still learning that lesson about not replacing things unnecessarily, but I'm trying to get better at it.
+            </div>
+            
+            <div class="memory-box">
+                <strong>🎣 LAKE HOUSE PATIENCE & UNDERSTANDING</strong><br>
+                Whether it's being patient when I'm a constant financial drain, dealing with bipolar moments when I say things I don't mean, or letting me have people over at the lake house - Dad's patience is legendary. Thanks for never giving up on me, even when I'm being impossible.
+            </div>
+        </div>
+        
 
-        <!-- Incident History Section -->
-        <div class="monitors-list" id="incidentHistory" style="margin-top: 30px;">
-            <h3 style="padding: 15px; margin: 0; border-bottom: 1px solid #444;">Recent Incidents</h3>
-            <div id="incidentHistoryLoading" class="loading">Loading incident history...</div>
-            <div id="incidentList" style="padding: 15px;"></div>
+        
+        <div id="thanks" class="section">
+            <h2>💝 OFFICIAL THANK YOU MESSAGES 💝</h2>
+            
+            <div class="thank-you">
+                <h3>THANKS FOR NEVER GIVING UP ON ME</h3>
+                <p>Even when I'm impossible, even when I'm a constant financial drain, even when bipolar brain makes me say things I don't mean - you never quit on me. That means everything.</p>
+            </div>
+            
+            <div style="background: #E6F3FF; border: 2px solid #0066CC; padding: 15px; margin: 15px 0;">
+                <strong>✓ Always makes me laugh</strong> (Even at inappropriate times - especially then!)<br>
+                <strong>✓ Best dad jokes in the business</strong> (The dadda-base joke is still undefeated)<br>
+                <strong>✓ Master problem solver</strong> (That genius-level math brain of yours saves the day)
+            </div>
+        </div>
+        
+        <div id="contact" class="section">
+            <h2>📞 CONTACT DAD 📞</h2>
+            <div style="text-align: center; font-family: 'Courier New', monospace; font-size: 18px;">
+                <strong>Dad's Direct Line:</strong><br><br>
+                <span style="background: #FFFF00; padding: 10px; border: 2px solid #000000; font-size: 20px; font-weight: bold;">
+                    (346) 525-7240
+                </span>
+                <br><br>
+                <em>(Why are you using the website when you could just call?)</em>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <div>Website proudly built with Microsoft FrontPage Express</div>
+            <div style="font-size: 12px; margin-top: 5px;">
+                Copyright © 2025 Chris "Topher" Appreciation Society • All Dad Jokes Reserved
+            </div>
+            <div style="margin-top: 10px;">
+                <span class="under-construction">🚧 UNDER CONSTRUCTION 🚧</span><br>
+                <span style="font-size: 10px;">Adding more appreciation daily!</span>
+            </div>
         </div>
     </div>
-</div>
-
-<script>
-    // UptimeRobot API key (read-only)
-    const API_KEY = 'ur2875017-118b6389ec2262a9135b7929';
-
-    // Status and Type Mappings
-    const STATUS_MAP = {
-        0: { text: 'Paused', class: 'status-paused' },
-        1: { text: 'Not checked yet', class: 'status-paused' },
-        2: { text: 'Up', class: 'status-up' },
-        8: { text: 'Seems Down', class: 'status-down' },
-        9: { text: 'Down', class: 'status-down' }
-    };
-
-    const TYPE_MAP = {
-        1: 'HTTP(S)',
-        2: 'Keyword',
-        3: 'Ping',
-        4: 'Port',
-        5: 'Heartbeat'
-    };
-
-    // DOM Elements
-    const errorMessage = document.getElementById('errorMessage');
-    const refreshBtn = document.getElementById('refreshBtn');
-    const loading = document.getElementById('loading');
-    const monitorsTable = document.getElementById('monitorsTable');
-    const monitorsTableBody = document.getElementById('monitorsTableBody');
-    const upCount = document.getElementById('upCount');
-    const downCount = document.getElementById('downCount');
-    const pausedCount = document.getElementById('pausedCount');
-    const monitoringStatus = document.getElementById('monitoringStatus');
-    const lastUpdated = document.getElementById('lastUpdated');
-    const downMonitorsDiv = document.getElementById('downMonitors');
-    const downMonitorsList = document.getElementById('downMonitorsList');
     
-    // Last 24 Hours Elements
-    const overallUptime = document.getElementById('overallUptime');
-    const incidentCount = document.getElementById('incidentCount');
-    const timeWithoutIncidents = document.getElementById('timeWithoutIncidents');
-    const affectedMonitors = document.getElementById('affectedMonitors');
-
-    // Global variables
-    let notificationSound = 'none';
-    let notificationAudio = new Audio();
-    let previousStatus = {}; // To track status changes
-    let totalMonitorLimit = 50; // Default total monitor limit
-    let last24HoursData = {
-        uptime: 0,
-        incidents: 0,
-        withoutIncidents: '0h, 0m',
-        affectedMonitors: 0
-    };
-
-    // Initialize when page loads
-    document.addEventListener('DOMContentLoaded', function() {
-        fetchMonitors();
-        fetchIncidentHistory();
-        initNotifications();
-        initFilterAndSearch();
-
-        // Auto-refresh data every 1 minute
-        setInterval(fetchMonitors, 60000);
-    });
-
-    // Event Listeners
-    refreshBtn.addEventListener('click', fetchMonitors);
-
-    // Function to fetch monitors data
-    async function fetchMonitors() {
-        // Reset UI
-        errorMessage.style.display = 'none';
-        loading.style.display = 'block';
-        monitorsTable.style.display = 'none';
-        downMonitorsDiv.style.display = 'none';
-
-        try {
-            // Create API request data
-            const formData = new FormData();
-            formData.append('api_key', API_KEY);
-            formData.append('format', 'json');
-            formData.append('all_time_uptime_ratio', '1');
-            formData.append('response_times', '1');
-            formData.append('logs', '1');
-            formData.append('response_times_limit', '1');
-            formData.append('logs_limit', '10'); // Get more logs to analyze
-            formData.append('custom_uptime_ratios', '1-7-30'); // Get uptime for last day, week, month
-
-            // Make the API request directly
-            const response = await fetch('https://api.uptimerobot.com/v2/getMonitors', {
-                method: 'POST',
-                body: formData
-            });
-
-            // Parse response
-            const data = await response.json();
-
-            // Check if the response is valid
-            if (data && data.stat === 'ok') {
-                renderMonitors(data.monitors);
-                updateLastUpdated();
-                checkStatusChanges(data.monitors);
-                await fetchLast24HoursStats(data.monitors);
-            } else {
-                throw new Error('Invalid response from UptimeRobot API');
-            }
-        } catch (error) {
-            console.error('Fetch error:', error);
-            showError(`Failed to fetch monitor data: ${error.message}`);
-        } finally {
-            loading.style.display = 'none';
+    <script>
+        // Add some classic early 2000s JavaScript
+        function showAlert() {
+            alert("Thanks for visiting Dad Appreciation Central! Don't forget to call!");
         }
-    }
-
-    // Function to render monitors data
-    function renderMonitors(monitors) {
-        if (!monitors || !Array.isArray(monitors)) {
-            showError('Invalid data format received from API');
-            return;
-        }
-
-        // Clear tables and lists
-        monitorsTableBody.innerHTML = '';
-        downMonitorsList.innerHTML = '';
-
-        // Count different statuses
-        let upCounter = 0;
-        let downCounter = 0;
-        let pausedCounter = 0;
-        let hasDownMonitors = false;
-
-        // Process and display each monitor
-        monitors.forEach(monitor => {
-            // Update counters
-            if (monitor.status === 2) upCounter++;
-            else if (monitor.status === 8 || monitor.status === 9) {
-                downCounter++;
-                hasDownMonitors = true;
-
-                // Add to down monitors list
-                const li = document.createElement('li');
-                li.textContent = `${monitor.friendly_name} ${monitor.url ? `(${monitor.url})` : ''}`;
-                downMonitorsList.appendChild(li);
-            }
-            else pausedCounter++;
-
-            // Create table row
-            const row = document.createElement('tr');
-
-            // Calculate uptime percentage
-            const uptimePercent = parseFloat(monitor.all_time_uptime_ratio) || 0;
-
-            // Build row content
-            row.innerHTML = `
-                <td>${monitor.friendly_name}</td>
-                <td>${TYPE_MAP[monitor.type] || 'Unknown'}</td>
-                <td>
-                    <span class="status-indicator ${STATUS_MAP[monitor.status].class}"></span>
-                    ${STATUS_MAP[monitor.status].text}
-                </td>
-                <td>
-                    <div>${uptimePercent.toFixed(2)}%</div>
-                    <div class="uptime-bar">
-                        <div class="uptime-value" style="width: ${uptimePercent}%"></div>
-                    </div>
-                </td>
-            `;
-
-            // Highlight down rows
-            if (monitor.status === 8 || monitor.status === 9) {
-                row.style.backgroundColor = '#3a2222';
-            }
-
-            monitorsTableBody.appendChild(row);
-        });
-
-        // Update summary counters
-        upCount.textContent = upCounter;
-        downCount.textContent = downCounter;
-        pausedCount.textContent = pausedCounter;
         
-        // Update monitoring status
-        monitoringStatus.textContent = `Using ${monitors.length} of ${totalMonitorLimit} monitors.`;
-
-        // Show down monitors section if there are any
-        if (hasDownMonitors) {
-            downMonitorsDiv.style.display = 'block';
-        }
-
-        // Show table
-        monitorsTable.style.display = 'table';
-    }
-
-    // Function to fetch and calculate stats for the last 24 hours
-    async function fetchLast24HoursStats(monitors) {
-        try {
-            // Fetch specific stats for the last 24 hours (can be a separate API call if needed)
-            const now = Math.floor(Date.now() / 1000);
-            const oneDayAgo = now - (24 * 60 * 60);
-            
-            // Collect incidents from all monitors
-            let incidents = [];
-            let affectedMonitorIds = new Set();
-            let uptimeSum = 0;
-            let monitorCount = 0;
-            
-            // Process each monitor
-            monitors.forEach(monitor => {
-                // Only consider active monitors
-                if (monitor.status !== 0) { // Not paused
-                    monitorCount++;
-                    
-                    // Use custom uptime ratios if available
-                    if (monitor.custom_uptime_ratio && monitor.custom_uptime_ratio.length > 0) {
-                        const uptimeRatios = monitor.custom_uptime_ratio.split('-');
-                        if (uptimeRatios.length > 0) {
-                            const dayUptimeRatio = parseFloat(uptimeRatios[0]); // First value is 1-day ratio
-                            if (!isNaN(dayUptimeRatio)) {
-                                uptimeSum += dayUptimeRatio;
-                            }
-                        }
-                    }
-                    
-                    // Extract incidents from logs
-                    if (monitor.logs && Array.isArray(monitor.logs)) {
-                        const recentLogs = monitor.logs.filter(log => log.datetime >= oneDayAgo);
-                        
-                        let monitorHasIncident = false;
-                        
-                        recentLogs.forEach(log => {
-                            // If it's a down event
-                            if (log.type === 1) {
-                                incidents.push({
-                                    monitorId: monitor.id,
-                                    datetime: log.datetime,
-                                    duration: log.duration || 0,
-                                    reason: log.reason || 'Unknown'
-                                });
-                                
-                                monitorHasIncident = true;
-                            }
-                        });
-                        
-                        if (monitorHasIncident) {
-                            affectedMonitorIds.add(monitor.id);
-                        }
-                    }
-                }
-            });
-            
-            // Sort incidents by time (newest first)
-            incidents.sort((a, b) => b.datetime - a.datetime);
-            
-            // Calculate overall uptime
-            const overallUptimeValue = monitorCount > 0 ? uptimeSum / monitorCount : 100;
-            
-            // Calculate time without incidents
-            let timeWithoutIncidentsValue = '24h, 0m';
-            if (incidents.length > 0) {
-                const mostRecentIncident = incidents[0];
-                const secondsSinceLastIncident = now - mostRecentIncident.datetime;
-                const hoursWithoutIncidents = Math.floor(secondsSinceLastIncident / 3600);
-                const minutesWithoutIncidents = Math.floor((secondsSinceLastIncident % 3600) / 60);
-                timeWithoutIncidentsValue = `${hoursWithoutIncidents}h, ${minutesWithoutIncidents}m`;
-            }
-            
-            // Update the last 24 hours data
-            last24HoursData = {
-                uptime: overallUptimeValue.toFixed(3),
-                incidents: incidents.length,
-                withoutIncidents: timeWithoutIncidentsValue,
-                affectedMonitors: affectedMonitorIds.size
-            };
-            
-            // Update the UI
-            updateLast24HoursUI();
-            
-        } catch (error) {
-            console.error('Error fetching 24-hour stats:', error);
-            // Use fallback values or previous values
-            updateLast24HoursUI();
-        }
-    }
-    
-    // Function to update the Last 24 Hours UI elements
-    function updateLast24HoursUI() {
-        if (overallUptime) overallUptime.textContent = `${last24HoursData.uptime}%`;
-        if (incidentCount) incidentCount.textContent = last24HoursData.incidents;
-        if (timeWithoutIncidents) timeWithoutIncidents.textContent = last24HoursData.withoutIncidents;
-        if (affectedMonitors) affectedMonitors.textContent = last24HoursData.affectedMonitors;
-    }
-
-    // Function to check for status changes and notify
-    function checkStatusChanges(monitors) {
-        monitors.forEach(monitor => {
-            const monitorId = monitor.id;
-
-            // If we have previous status for this monitor
-            if (previousStatus[monitorId] !== undefined) {
-                const oldStatus = previousStatus[monitorId];
-                const newStatus = monitor.status;
-
-                // If status changed from up to down
-                if ((oldStatus === 2) && (newStatus === 8 || newStatus === 9)) {
-                    showNotification(
-                        'Monitor Down!',
-                        `${monitor.friendly_name} is down. Status: ${STATUS_MAP[newStatus].text}`
-                    );
-                }
-                // If status changed from down to up
-                else if ((oldStatus === 8 || oldStatus === 9) && (newStatus === 2)) {
-                    showNotification(
-                        'Monitor Recovered!',
-                        `${monitor.friendly_name} is back up.`
-                    );
-                }
-            }
-
-            // Update previous status
-            previousStatus[monitorId] = monitor.status;
-        });
-    }
-    
-    // Function to display errors
-    function showError(message) {
-        errorMessage.textContent = message;
-        errorMessage.style.display = 'block';
-    }
-
-    // Function to update last updated timestamp
-    function updateLastUpdated() {
-        const now = new Date();
-        lastUpdated.textContent = `Last updated: ${now.toLocaleString()}`;
-    }
-
-    // Function to fetch and display incident history
-    async function fetchIncidentHistory() {
-        if (!document.getElementById('incidentHistoryLoading')) return;
-        
-        document.getElementById('incidentHistoryLoading').style.display = 'block';
-        document.getElementById('incidentList').innerHTML = '';
-
-        try {
-            // Create API request data for logs
-            const formData = new FormData();
-            formData.append('api_key', API_KEY);
-            formData.append('format', 'json');
-            formData.append('logs', '1');
-            formData.append('limit', '100'); // Get more logs to filter
-            
-            // Make the API request
-            const response = await fetch('https://api.uptimerobot.com/v2/getMonitors', {
-                method: 'POST',
-                body: formData
-            });
-            
-            // Check if response is OK
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            // Get the text first to verify it's valid JSON
-            const text = await response.text();
-            
-            // Parse response safely
-            let data;
-            try {
-                data = JSON.parse(text);
-            } catch (e) {
-                console.error('JSON parse error:', e, 'Response:', text.substring(0, 100));
-                throw new Error(`Failed to parse API response: ${e.message}`);
-            }
-
-            // Process data
-            if (data && data.stat === 'ok' && data.monitors && Array.isArray(data.monitors)) {
-                renderIncidentList(processIncidents(data.monitors));
-            } else {
-                throw new Error('Invalid data format received from API');
-            }
-        } catch (error) {
-            console.error('Failed to fetch incident history:', error);
-            if (document.getElementById('incidentList')) {
-                document.getElementById('incidentList').innerHTML = `<p>Error loading incident history: ${error.message}</p>`;
-            }
-        } finally {
-            if (document.getElementById('incidentHistoryLoading')) {
-                document.getElementById('incidentHistoryLoading').style.display = 'none';
-            }
-        }
-    }
-    
-    // Helper function to process and filter incidents
-    function processIncidents(monitors) {
-        // Extract and process all incidents
-        let allIncidents = [];
-        
-        monitors.forEach(monitor => {
-            if (monitor.logs && Array.isArray(monitor.logs)) {
-                monitor.logs.forEach(log => {
-                    // Only add if it's a Down or Up event (types 1 and 2)
-                    if (log.type === 1 || log.type === 2) {
-                        allIncidents.push({
-                            monitor_name: monitor.friendly_name || 'Unknown Monitor',
-                            datetime: log.datetime || 0,
-                            type: log.type || 0
-                        });
-                    }
-                });
-            }
-        });
-        
-        // Sort by datetime (newest first)
-        allIncidents.sort((a, b) => b.datetime - a.datetime);
-        
-        // Limit to most recent 20
-        return allIncidents.slice(0, 20);
-    }
-
-    // Function to render the incident list
-    function renderIncidentList(incidents) {
-        const incidentList = document.getElementById('incidentList');
-        if (!incidentList) return;
-
-        if (!incidents || incidents.length === 0) {
-            incidentList.innerHTML = '<p>No incidents in the last 7 days.</p>';
-            return;
-        }
-
-        const table = document.createElement('table');
-        table.style.width = '100%';
-        table.style.borderCollapse = 'collapse';
-
-        // Create header
-        const thead = document.createElement('thead');
-        thead.innerHTML = `
-            <tr>
-                <th style="text-align: left; padding: 10px; border-bottom: 1px solid #444;">Monitor</th>
-                <th style="text-align: left; padding: 10px; border-bottom: 1px solid #444;">Time</th>
-                <th style="text-align: left; padding: 10px; border-bottom: 1px solid #444;">Type</th>
-            </tr>
-        `;
-        table.appendChild(thead);
-
-        // Create body
-        const tbody = document.createElement('tbody');
-        
-        // Add each incident to the table
-        incidents.forEach(incident => {
-            try {
-                // Convert timestamp to readable date
-                let formattedDate = 'Unknown';
-                if (incident.datetime) {
-                    const incidentDate = new Date(incident.datetime * 1000);
-                    formattedDate = incidentDate.toLocaleString();
-                }
-
-                // Determine event type and row color
-                let eventType = 'Unknown';
-                let rowColor = '';
-
-                if (incident.type === 1) {
-                    eventType = 'Down';
-                    rowColor = '#3a2222';
-                } else if (incident.type === 2) {
-                    eventType = 'Up';
-                    rowColor = '#223a22';
-                }
-
-                // Create and append row
-                const row = document.createElement('tr');
-                if (rowColor) {
-                    row.style.backgroundColor = rowColor;
-                }
-
-                row.innerHTML = `
-                    <td style="padding: 10px; border-bottom: 1px solid #333;">${incident.monitor_name || 'Unknown'}</td>
-                    <td style="padding: 10px; border-bottom: 1px solid #333;">${formattedDate}</td>
-                    <td style="padding: 10px; border-bottom: 1px solid #333;">${eventType}</td>
-                `;
-                tbody.appendChild(row);
-            } catch (e) {
-                console.error('Error rendering incident:', e, incident);
-                // Skip this incident if there's an error
-            }
-        });
-
-        table.appendChild(tbody);
-        incidentList.innerHTML = '';
-        incidentList.appendChild(table);
-    }
-
-    // Add filter and search functionality
-    function initFilterAndSearch() {
-        const searchInput = document.getElementById('searchMonitors');
-        const statusFilter = document.getElementById('statusFilter');
-        const typeFilter = document.getElementById('typeFilter');
-        
-        if (!searchInput || !statusFilter || !typeFilter) return;
-
-        function applyFilters() {
-            const searchTerm = searchInput.value.toLowerCase();
-            const statusValue = statusFilter.value;
-            const typeValue = typeFilter.value;
-
-            const rows = monitorsTableBody.querySelectorAll('tr');
-
-            rows.forEach(row => {
-                const monitorName = row.cells[0].textContent.toLowerCase();
-                const monitorType = row.cells[1].textContent;
-                const monitorStatus = row.cells[2].textContent.trim();
-
-                // Check search term
-                const matchesSearch = searchTerm === '' || monitorName.includes(searchTerm);
-
-                // Check status filter
-                let matchesStatus = true;
-                if (statusValue !== 'all') {
-                    if (statusValue === 'up' && !monitorStatus.includes('Up')) matchesStatus = false;
-                    if (statusValue === 'down' && !(monitorStatus.includes('Down') || monitorStatus.includes('Seems Down'))) matchesStatus = false;
-                    if (statusValue === 'paused' && !(monitorStatus.includes('Paused') || monitorStatus.includes('Not checked'))) matchesStatus = false;
-                }
-
-                // Check type filter
-                let matchesType = true;
-                if (typeValue !== 'all') {
-                    const typeId = Object.keys(TYPE_MAP).find(key => TYPE_MAP[key] === monitorType);
-                    if (typeId !== typeValue) matchesType = false;
-                }
-
-                // Show/hide row based on filters
-                if (matchesSearch && matchesStatus && matchesType) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        }
-
-        // Add event listeners
-        searchInput.addEventListener('input', applyFilters);
-        statusFilter.addEventListener('change', applyFilters);
-        typeFilter.addEventListener('change', applyFilters);
-    }
-
-    // Function to initialize notification system
-    function initNotifications() {
-        // Set up notification permissions if browser supports it
-        if ('Notification' in window) {
-            if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
-                Notification.requestPermission();
-            }
-        }
-
-        // Initialize audio for sound notifications
-        const notificationSoundSelector = document.getElementById('notificationSound');
-        const testSoundButton = document.getElementById('testSound');
-        
-        if (notificationSoundSelector) {
-            notificationSoundSelector.addEventListener('change', function() {
-                notificationSound = this.value;
-                localStorage.setItem('uptimeRobotNotificationSound', notificationSound);
-            });
-        }
-
-        if (testSoundButton) {
-            testSoundButton.addEventListener('click', function() {
-                playNotificationSound();
-            });
-        }
-
-        // Load saved settings
-        const savedSound = localStorage.getItem('uptimeRobotNotificationSound');
-        if (savedSound && notificationSoundSelector) {
-            notificationSound = savedSound;
-            notificationSoundSelector.value = savedSound;
-        }
-    }
-
-    // Function to play notification sound
-    function playNotificationSound() {
-        if (notificationSound === 'none') return;
-
-        if (notificationSound === 'beep') {
-            notificationAudio.src = 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3';
-        } else if (notificationSound === 'chime') {
-            notificationAudio.src = 'https://assets.mixkit.co/active_storage/sfx/1630/1630-preview.mp3';
-        }
-
-        notificationAudio.play().catch(e => console.error('Error playing notification:', e));
-    }
-
-    // Function to show notification
-    function showNotification(title, message) {
-        // Play sound
-        playNotificationSound();
-
-        // Browser notification
-        if ('Notification' in window && Notification.permission === 'granted') {
-            new Notification(title, {
-                body: message,
-                icon: '/favicon.ico'
-            });
-        }
-    }
-</script>
+        // Auto-play "visitor" sound effect (just kidding, that would be evil)
+        setTimeout(showAlert, 3000);
+    </script>
+</body>
+</html>
